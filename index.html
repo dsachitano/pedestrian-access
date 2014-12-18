@@ -1,0 +1,145 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Pedestrian Access Dataset Generation</title>
+  <meta name="description" content="When you don't have the data you need, make your own data.  Here's how.">
+  <meta name="author" content="David Sachitano">
+
+
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+  <link rel="stylesheet" href="css/pagestyle.css" />
+  <link rel="stylesheet" href="css/skeleton.css" />
+</head>
+
+<body>
+  <!-- <div id = 'map'>
+  </div>
+  <div id = 'readme'>
+    <div id = 'putTheMarkdownHere' class="markdown-body">
+    </div>
+  </div> -->
+
+  <div class="container">
+
+    <!-- Introduction -->
+    <div class="row">
+      <div class="nine columns">
+        <h1>How to generate your own dataset</h1>
+        <h5>When faced with a dearth of sufficient data for a GIS problem I was trying to solve, I had three options.  Keep searching for data that met my needs, give up, or generate my own dataset.</h5>
+        <h5>Using a combination of <a href="http://maps.google.com">Google Street View</a> and <a href="http://mechanicalturk.com">Amazon Mechanical Turk</a>, I was able to quickly collect hundreds of datapoints with reasonable accuracy.  This page will show you how I did it.
+        </h5>
+      </div>
+    </div>
+
+
+    <!-- Statement of problem -->
+    <div class="row">
+      <h3>The problem</h3>
+      <p>
+      Put simply, I want better walking/running routing tools than what I've been able to find.  Google Maps is great for figuring out how to walk across your neighborhood, or find a train station on foot, but when greater distances are involved, like inter-city trips on foot, Google Maps will often suggest routes along perilously unsuitable roads for pedestrian travellers.   
+      </p>
+      <p>
+      I wanted to build my own system that would give me routes that I can actually use safely.  The first place to start is with data: you can't generate a route if you don't have data to work with.  <a href="http://openstreetmap.org">Open Street Map</a> is a great source of data, covering all corners of the globe.  This is what I started with.  However, it was immediately clear that their data would not suffice.
+      </p>
+    </div>
+
+    <!-- What wasn't working -->
+    <div class="row">
+      <h3>What's wrong with Open Street Map data?</h3>
+      <p>
+       The map below shows a small area (which will be the focus area of this experiment), where the roads/paths/trails that are accessible to pedestrians are colored in red.  Zoom in and explore.
+      </p>
+      <div class="twelve columns">
+        <div class="my-leaflet-maps" id="map"></div>
+      </div>
+      <p>
+        It does not take much investigation to notice that there is no path from one side of the map to the other side that consists only of red (pedestrian accessible) lines.  Not only that, but there seems to be a great deal of inconsistency.
+      </p>
+    </div>
+
+    <!-- The data is out there... -->
+    <div class="row">
+      <h3>The data is out there</h3>
+      <p>Without a reliable set of data at hand, I set to work on finding what I wanted.  I basically want to be able to walk down each road and see for myself how accessible it is.  Maybe there's a sidewalk, but if not, maybe it's a quiet country road with an ample shoulder; for my needs, such a road would suffice.  But obviously it's not practical to examine every road in America (or the world) in person...</p>
+      <p>...Unless you're google.  There is already an enormous collection of exactly the information I need: <a href="http://maps.google.com">Google Street View</a>.
+      </p>
+      <div class="twelve columns" id="map-canvas"></div>
+      <p/>
+    </div>
+
+    <!-- You just need to take it -->
+    <div class="row">
+      <h3>But how do you quantize google street view data?</h3>
+      <p>
+        So far so good.  We've identified a very promising source of data in Google Street View.  But now how do we convert this very visual, subjective ("eh... sure, that shoulder looks like I could run on it") information into quantifiable values that can be used in SQL routing queries?  
+      </p>
+      <p>
+        Like before, the most straightforward way would be to sit at our desks, clicking through google street view imagery and recording our findings along the way.  As noted perviously, this is not a very practical solution.  Not unless we had hundreds of copies of ourselves performing this task.  But we are in luck!  This is the internet, and such a thing exists: <a href="http://mechanicalturk.com">Amazon Mechanical Turk</a>.
+      </p>
+      <p>
+        Mechanical Turk is basically a system that automates the process of distributing small tasks to be performed by humans, and collecting the results.  This is the step that allowed me parallelize the task of manually examining Street View imagery to hundreds of workers, and collect the results.
+      </p>
+      <p>
+        To perpare my data for the Mechanical Turk workers, I needed to generate tasks for them.  Each worker would be presented with a Street View image, and then asked to classify it according to the following categories:
+      </p>
+      <ul>
+        <li>Has Sidewalk</li>
+        <li>Has narrow shoulder</li>
+        <li>Has wide shoulder</li>
+        <li>Road not visible</li>
+        <li>No Imagery available</li>
+      </ul>
+      <p>
+        The workers just have to look at the image, and choose the most appropriate category from that list.
+      </p>
+    </div>
+
+
+    <!-- The experiment -->
+    <div class="row">
+      <h3>Perparing for Mechanical Turk</h3>
+      <p>
+        The fist step was to choose a focus area.  I had no idea how well this would work, and since it costs money I didn't want to just let loose on a giant set of data.  Since this page is focussed on the small area in the first map, shown above, I decided to divide that map into a grid, and collect my first run of Mechanical Turk data from one of the grid cells that currently has the least amount of Open Street Map data.  That cell is highlighed in green below.
+      </p>
+      <p>The following map shows my grid, with cells colored by how many miles of pedestrian accessible road there are according to Open Street Map
+      </p>
+      <div class="twelve columns" id="grid-map"></div>
+    </div>
+
+    <!-- final prep work -->
+    <div class="row">
+      <h3>Generating the data for one grid cell</h3>
+      <p>I chose just a single cell as the fist area over which to collect data from Mechanical Turk.  I had to compute the intersection of all roads within the Open Street Map dataset with the bounds of my cell, and then interpolate lat/long points along each road.  These were then output into a csv file which is the input for Mechanical Turk.  In total there were 747 datapoints submitted.</p>
+      <p>From there, I just had to submit the data and wait for about two hours.
+    </div>
+
+    <!-- results -->
+    <div class="row">
+      <h3>The Results!</h3>
+      <div class="twelve columns" id="pointmap"></div>
+      <p>Points where Sidewalks were observed are colored red, to match the basemap.  Roads with passable shoulders (either wide or narrow) are marked as orange.  All other observations are marked gray.
+      </p>
+
+      <h5>Sidewalks</h5>
+      <p>The first thing to look at is red, the sidewalks.  There are a few clusters, one of which appears to be the center of a small town, and nearby two more clusters that appear to be residential neighborhoods.  There do not appear to be any paths with sidewalk access leading into our out of these clusters.
+      </p>
+
+      <h5>Roads with Shoulders</h5>
+      <p>There are many more options if the pedestrian is willing to walk on the shoulder of the road.  However there are almost immediately some problems.  Foremost is that when identifying roads with ample shoulders, no consideration was given to the size of the road.  Thus, we see a long wide stretch of orange marked points, indicating shoulders, but on what appears to be a major 3 lane highway.  This would not be a good road for a pedestrian.</p>
+
+      <h5>No Data</h5>
+      <p>A very large chunk of the data returned was for locations where Street View does not provide imagery.  Culling these points from our Mechanical Turk task would be a major optimization both in terms of time, and cost.</p>
+
+    </div>
+
+  </div>
+
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+  <script src="js/page_script.js"></script>
+</body>
+</html>

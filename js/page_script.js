@@ -102,7 +102,7 @@ function colorForCell(length) {
  */
 $.ajax({
   dataType: "json",
-  url: "../data/mturk_results.geojson",
+  url: "data/mturk_results.geojson",
   success: function(data) {
     var myLayer = L.geoJson(data, {
       style: function(feature) {
@@ -128,7 +128,7 @@ $.ajax({
  */
 $.ajax({
   dataType: "json",
-  url: "../data/line_length_grid.geojson",
+  url: "data/line_length_grid.geojson",
   success: function(data) {
     var myLayer = L.geoJson(data, {
       style: function(feature) {
